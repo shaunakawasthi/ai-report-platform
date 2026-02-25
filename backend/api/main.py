@@ -8,11 +8,24 @@ from backend.services.ai_service import generate_report
 from backend.agents.research_pipeline import run_research_pipeline
 from backend.services.ai_service import generate_report, get_token_usage
 
+from fastapi.middleware.cors import CORSMiddleware
+
 app = FastAPI(
     title="AI Report Platform",
     description="Multi-agent AI system for research and report generation",
     version="0.1.0"
 )
+
+# Add after app = FastAPI(...)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
 
 # Pydantic model defines what the request body must look like
 # FastAPI uses this for automatic validation

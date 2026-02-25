@@ -1,0 +1,24 @@
+name: CD Pipeline
+
+# Only trigger when code is merged to main
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    name: Deploy to Azure
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # This step will be expanded in Phase 7 when we set up Azure
+      # For now it just confirms deployment would happen
+      - name: Confirm deployment trigger
+        run: |
+          echo "✅ Code merged to main"
+          echo "🚀 Deployment pipeline triggered"
+          echo "📦 Would build and push Docker images here"
+          echo "☁️ Would deploy to Azure Container Apps here"
