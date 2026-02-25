@@ -4,6 +4,8 @@ from sqlalchemy import select
 from backend.db.database import get_db
 from backend.db.models import Report, ReportStatus
 from pydantic import BaseModel
+from backend.services.ai_service import generate_report
+from backend.agents.research_pipeline import run_research_pipeline
 from backend.services.ai_service import generate_report, get_token_usage
 
 app = FastAPI(
@@ -138,3 +140,40 @@ async def check_token_usage(topic: str):
     """
     result = await get_token_usage(topic)
     return result
+
+@app.post("/reports/pipeline", status_code=201)
+async def generate_pipeline_report(
+    request: CreateReportRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Runs the full multi-agent pipeline:
+    Research → Analysis → Writing → Validation → Save
+    """
+    print(f"🚀 Starting multi-agent pipeline for: {request.topic}")
+    
+    # Run the multi-agent pipeline
+    result = await run_research_pipeline(request.topic)
+    
+    # Save the final report to PostgreSQL
+    new_report = Report(
+        title=request.title,
+        topic=request.topic,
+        content=result["final_report"],
+        status=ReportStatus.COMPLETED,
+        user_id=request.user_id
+    )
+    db.add(new_report)
+    await db.flush()
+    await db.refresh(new_report)
+    
+    return {
+        "id": new_report.id,
+        "title": new_report.title,
+        "topic": new_report.topic,
+        "status": new_report.status,
+        "content": new_report.content,
+        "iterations": result["iterations"],
+        "approved": result["approved"],
+        "created_at": new_report.created_at
+    }
